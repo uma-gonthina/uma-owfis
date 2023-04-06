@@ -58,10 +58,11 @@
                           <CollectionList
                             :note="note"
                             :index="index"
-                            @emitData="emitData"
+                            @edit="editNote"
+                            @delete="deleteNote"
                           />
 
-                          <CollectionEdit v-if="editInput.uid" :note="editInput" @edit="edit" />
+                          <CollectionEdit v-if="editInput.uid==note.uid" :note="editInput" @edit="edit" />
                         </div>
                       </div>
 
@@ -105,14 +106,18 @@ const props = withDefaults(defineProps<FormItemSchema>(), {
   entity: "",
 });
 const editInput = ref([]);
+
 const { data: notesdata } = await useAuthLazyFetch(`${props.url}`, {});
+
+
+
 const notes = notesdata.value;
 const open = ref(true);
 
-console.log("notes.value -->", notes.value);
-const emitData = (note: Object) => {
-  note.value == "edit" ? (editInput.value = note.note) : deleteNote(note);
+const editNote = (note: Object) => {
+  editInput.value = note.note;
 };
+
 const add = async (note: any) => {
   const { data } = await  useAuthLazyFetchPost(
     `${props.editUrl}/${props.entity}/${props.entityId}`,
@@ -129,14 +134,17 @@ const add = async (note: any) => {
   console.log("notes",notes)
   editInput.value=[]
 };
+
 const deleteNote = (note: any) => {
   useAuthLazyFetchDelete(`${props.editUrl}/${note.note.uid}`, {});
-  // If the tag exists, delete it
+  // If the note exists, delete it
   if (note.index !== -1) {
-    // To remove deleted tag
-    notes.value.splice(note.index, 1);
+    // To remove deleted note
+    notes.splice(note.index, 1);
+;
   }
 };
+
 // Edit notes
 const edit = (note: any) => {
   useAuthLazyFetchPut(`${props.editUrl}/${note.uid}?name=${note.note}`, {
@@ -147,10 +155,13 @@ const edit = (note: any) => {
     },
   });
   notes.forEach((data: any) => {
+   
     if (note.uid === data.uid) {
-      // Changing the edited tag
-      data.name = note.note;
+      // Changing the edited note
+      data.note = note.note;
     }
   });
+
+
 };
 </script>
